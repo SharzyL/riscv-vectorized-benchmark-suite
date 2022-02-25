@@ -1,19 +1,12 @@
-#makefile
-GCC_TOOLCHAIN_DIR := /newlib/
-SYSROOT_DIR := $(GCC_TOOLCHAIN_DIR)/riscv64-unknown-elf
-
-LLVM := /llvm/build/
-SPIKE := spike
-PK := pk
-
-target = bin/rvv-test
-
-serial:
-	${LLVM}/bin/clang++ --target=riscv64-unknown-elf -march=rv64gcv1p0 -menable-experimental-extensions --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -o $(target) src/blackscholes.cpp -lm
+include ../Makefile.in
 
 vector:
-	${LLVM}/bin/clang++ --target=riscv64-unknown-elf -DUSE_RISCV_VECTOR   -march=rv64gcv1p0 -menable-experimental-extensions --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR)  -O2 -o $(target)  src/blackscholes.cpp -lm
+	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_VECTOR) -c -o src/blackscholes.o src/blackscholes.cpp
+	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_VECTOR) $(LINK_FLAGS) -o $(target) src/*.o -lm
 
+serial:
+	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_SERIAL) -c -o src/blackscholes.o src/blackscholes.cpp
+	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_SERIAL) $(LINK_FLAGS) -o $(target) src/*.o -lm
 
 runspike :
 	$(SPIKE) --isa=rv64gcv $(PK) $(target) 1 ./input/in_64K.input prices.txt

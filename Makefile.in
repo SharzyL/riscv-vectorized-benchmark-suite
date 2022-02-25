@@ -1,0 +1,28 @@
+SPIKE := /home/sharzy/ws/riscv/bin/spike
+PK := /home/sharzy/ws/riscv/riscv64-elf/bin/pk
+
+target = bin/run
+
+CC := /home/sharzy/ws/llvm-project/build/bin/clang
+RVV = --target=riscv64-elf \
+	  -DUSE_RISCV_VECTOR \
+	  -march=rv64gcv1p0 \
+	  -menable-experimental-extensions \
+	  -mno-relax -static \
+	  -lm
+
+TOOLCHAIN = --sysroot=/usr/riscv64-elf --gcc-toolchain=/usr -I/usr/riscv64-elf/include/c++/11.1.0/riscv64-elf -L/usr/riscv64-linux-gnu/lib
+EXTRA_FLAGS_SERIAL := -O2 -Wall
+EXTRA_FLAGS_VECTOR := -O2 -Wall -DUSE_RISCV_VECTOR
+
+LINK_FLAGS = -fuse-ld=lld
+
+SRC = $(wildcard src/*.c) $(wildcard src/*.cpp)
+
+vector:
+	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_SERIAL) $(LINK_FLAGS) -o $(target) $(SRC)
+
+serial:
+	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_VECTOR) $(LINK_FLAGS) -o $(target) $(SRC)
+
+.PHONY: vector serial
