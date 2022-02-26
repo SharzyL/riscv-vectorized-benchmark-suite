@@ -3,19 +3,24 @@ PK := /home/sharzy/ws/riscv/riscv64-elf/bin/pk
 
 target = bin/run
 
-CC := /home/sharzy/ws/llvm-project/build/bin/clang
+CC := /home/sharzy/ws/llvm-project/build/bin/clang++
 RVV = --target=riscv64-elf \
 	  -DUSE_RISCV_VECTOR \
 	  -march=rv64gcv1p0 \
 	  -menable-experimental-extensions \
 	  -mno-relax -static \
-	  -lm
+	  -lm -v
 
-TOOLCHAIN = --sysroot=/usr/riscv64-elf --gcc-toolchain=/usr -I/usr/riscv64-elf/include/c++/11.1.0/riscv64-elf -L/usr/riscv64-linux-gnu/lib
+TOOLCHAIN = --sysroot=/usr/riscv64-elf \
+			--gcc-toolchain=/usr \
+			-I/usr/riscv64-elf/include/c++/11.1.0/riscv64-elf \
+			-L/usr/riscv64-elf/lib/rv64imafdc/lp64d \
+			-L/usr/lib/gcc/riscv64-elf/11.1.0
+
 EXTRA_FLAGS_SERIAL := -O2 -Wall
 EXTRA_FLAGS_VECTOR := -O2 -Wall -DUSE_RISCV_VECTOR
 
-LINK_FLAGS = -fuse-ld=lld
+LINK_FLAGS = -fuse-ld=mold
 
 SRC = $(wildcard src/*.c) $(wildcard src/*.cpp)
 
