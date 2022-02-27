@@ -1,33 +1,61 @@
+# configurations that you need to change to your own
+
 SPIKE := /home/sharzy/ws/riscv/bin/spike
 PK := /home/sharzy/ws/riscv/riscv64-elf/bin/pk
 
-target = bin/run
+CC := /home/sharzy/ws/llvm-project/build/bin/clang
+CXX := /home/sharzy/ws/llvm-project/build/bin/clang++
 
-CC := /home/sharzy/ws/llvm-project/build/bin/clang++
+# mold is suggested, ldd is not working for unknown reason
+LINKER := mold
+
+# end configuration
+
+target_vector = bin/vector
+target_serial = bin/serial
+
 RVV = --target=riscv64-elf \
 	  -DUSE_RISCV_VECTOR \
 	  -march=rv64gcv1p0 \
 	  -menable-experimental-extensions \
 	  -mno-relax -static \
-	  -lm -v
+	  -lm \
+	  -O2 -Wall \
 
 TOOLCHAIN = --sysroot=/usr/riscv64-elf \
 			--gcc-toolchain=/usr \
+			-fuse-ld=$(LINKER) \
 			-I/usr/riscv64-elf/include/c++/11.1.0/riscv64-elf \
+			-L/usr/lib/gcc/riscv64-elf/11.1.0 \
 			-L/usr/riscv64-elf/lib/rv64imafdc/lp64d \
-			-L/usr/lib/gcc/riscv64-elf/11.1.0
 
-EXTRA_FLAGS_SERIAL := -O2 -Wall
-EXTRA_FLAGS_VECTOR := -O2 -Wall -DUSE_RISCV_VECTOR
-
-LINK_FLAGS = -fuse-ld=mold
+EXTRA_FLAGS_SERIAL =
+EXTRA_FLAGS_VECTOR = -DUSE_RISCV_VECTOR
 
 SRC = $(wildcard src/*.c) $(wildcard src/*.cpp)
 
-vector:
-	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_SERIAL) $(LINK_FLAGS) -o $(target) $(SRC)
+PROG_ARGS :=
 
-serial:
-	$(CC) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_VECTOR) $(LINK_FLAGS) -o $(target) $(SRC)
+ifeq ($(wildcard src/*.cpp),)
+	COMPILER := $(CC)
+else
+	COMPILER := $(CXX)
+endif
 
-.PHONY: vector serial
+$(target_vector): $(SRC) $(CC)
+	$(COMPILER) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_VECTOR) $(CFLAGS) -o $@ $(SRC)
+
+$(target_serial): $(SRC) $(CC)
+	$(COMPILER) $(RVV) $(TOOLCHAIN) $(EXTRA_FLAGS_SERIAL) $(CFLAGS) -o $@ $(SRC)
+
+spike_vector: $(target_vector)
+	$(SPIKE) --isa=rv64gcv $(PK) $(target_vector) $(PROG_ARGS)
+
+spike_serial: $(target_serial)
+	$(SPIKE) --isa=rv64gcv $(PK) $(target_serial) $(PROG_ARGS)
+
+clean:
+	rm -f bin/*
+
+.PHONY: spike_serial spike_vector clean
+

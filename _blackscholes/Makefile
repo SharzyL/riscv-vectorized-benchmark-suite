@@ -1,4 +1,4 @@
 include ../Makefile.in
 
-runspike :
-	$(SPIKE) --isa=rv64gcv $(PK) $(target) 1 ./input/in_64K.input prices.txt
+PROG_ARGS := 1 ./input/in_64K.input prices.txt
+
